@@ -19,7 +19,7 @@ async def parse_transaction(text: str) -> Optional[dict]:
     client = get_client()
     try:
         response = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-4-5",
             max_tokens=256,
             system=PARSE_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": text}],
