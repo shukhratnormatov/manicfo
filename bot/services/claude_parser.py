@@ -54,7 +54,7 @@ async def parse_subscription_nlp(text: str) -> Optional[dict]:
 """
     try:
         response = client.messages.create(
-            model="claude-sonnet-4-20250514",
+            model="claude-sonnet-4-5",
             max_tokens=200,
             system=system,
             messages=[{"role": "user", "content": text}],
