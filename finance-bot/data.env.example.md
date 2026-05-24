@@ -1,0 +1,6 @@
+BOT_TOKEN=your_token_here
+ANTHROPIC_API_KEY=your_key_here
+SUPABASE_URL=your_url_here
+SUPABASE_KEY=your_key_here
+OWNER_TG_ID=your_id_here
+BASE_CURRENCY=UZS
