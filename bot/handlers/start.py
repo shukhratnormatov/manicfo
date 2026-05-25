@@ -5,6 +5,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message, CallbackQuery
 
 from bot.keyboards.inline import onboarding_goals_kb, skip_kb
+from bot.keyboards.reply import get_main_menu
 from bot.services import supabase_db as db
 
 router = Router()
@@ -25,7 +26,8 @@ async def cmd_start(message: Message, state: FSMContext):
             "👋 С возвращением!\n\n"
             "Просто пиши о тратах и доходах:\n"
             "«потратил 50к на продукты» или «получил зарплату 3 млн»\n\n"
-            "Команды: /goals /stats /subs /history /rates /help"
+            "Команды: /goals /stats /subs /history /rates /help",
+            reply_markup=get_main_menu(),
         )
         return
 
@@ -130,6 +132,12 @@ async def _save_onboarding_goal(message: Message, state: FSMContext, deadline):
         f"Добавить ещё одну цель?",
         reply_markup=onboarding_goals_kb(),
     )
+
+
+@router.callback_query(F.data == "nav:menu")
+async def back_to_menu(callback: CallbackQuery):
+    await callback.message.answer("Главное меню:", reply_markup=get_main_menu())
+    await callback.answer()
 
 
 @router.message(Command("help"))

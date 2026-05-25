@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message, CallbackQuery
 
-from bot.keyboards.inline import goals_actions_kb, skip_kb
+from bot.keyboards.inline import goals_actions_kb, goals_kb, skip_kb
 from bot.services import supabase_db as db, analytics
 from bot.utils.formatters import format_sum, progress_bar, format_percent
 
@@ -57,7 +57,7 @@ async def cmd_goals(message: Message):
                 text += f"При +{format_sum(monthly_rate)}/мес → {months_to_human(months)}\n"
         text += "\n"
 
-    await message.answer(text, parse_mode="Markdown", reply_markup=goals_actions_kb())
+    await message.answer(text, parse_mode="Markdown", reply_markup=goals_kb())
 
 
 @router.message(Command("add_goal"))

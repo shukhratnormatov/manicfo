@@ -31,6 +31,45 @@ def subs_actions_kb() -> InlineKeyboardMarkup:
     ])
 
 
+def back_to_menu_btn() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🏠 Меню", callback_data="nav:menu")],
+    ])
+
+
+def history_item_kb(tx_id: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="✏️ Изменить", callback_data=f"edit:tx:{tx_id}"),
+            InlineKeyboardButton(text="🗑 Удалить", callback_data=f"delete:tx:{tx_id}"),
+        ],
+        [InlineKeyboardButton(text="🏠 Меню", callback_data="nav:menu")],
+    ])
+
+
+def goals_kb() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="💳 Пополнить", callback_data="goal_save"),
+            InlineKeyboardButton(text="➕ Добавить", callback_data="goal_add"),
+        ],
+        [InlineKeyboardButton(text="🏠 Меню", callback_data="nav:menu")],
+    ])
+
+
+def subs_kb() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="➕ Добавить", callback_data="sub_add")],
+        [InlineKeyboardButton(text="🏠 Меню", callback_data="nav:menu")],
+    ])
+
+
+def cancel_tx_kb(tx_id: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="↩️ Отменить", callback_data=f"cancel_tx:{tx_id}")],
+    ])
+
+
 def skip_kb(callback_data: str = "skip") -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="⏭ Пропустить", callback_data=callback_data)],

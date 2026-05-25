@@ -187,6 +187,32 @@ async def get_budget_limit(user_id: int, category: str, month_date: str) -> Opti
         return None
 
 
+async def update_transaction(transaction_id: str, user_id: int, **fields) -> bool:
+    """Обновляет транзакцию. Проверяет что принадлежит user_id."""
+    db = get_client()
+    result = (
+        db.table("transactions")
+        .update(fields)
+        .eq("id", transaction_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    return len(result.data) > 0
+
+
+async def delete_transaction(transaction_id: str, user_id: int) -> bool:
+    """Удаляет транзакцию. Проверяет что принадлежит user_id."""
+    db = get_client()
+    result = (
+        db.table("transactions")
+        .delete()
+        .eq("id", transaction_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    return len(result.data) > 0
+
+
 async def get_goals(user_id: int) -> list:
     db = get_client()
     result = (
