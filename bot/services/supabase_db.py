@@ -169,18 +169,22 @@ async def get_category_month_total(user_id: int, category: str, year: int, month
 
 
 async def get_budget_limit(user_id: int, category: str, month_date: str) -> Optional[float]:
-    db = get_client()
-    result = (
-        db.table("budgets")
-        .select("limit_uzs")
-        .eq("user_id", user_id)
-        .eq("category", category)
-        .eq("month", month_date)
-        .execute()
-    )
-    if result.data:
-        return result.data[0]["limit_uzs"]
-    return None
+    # Таблица budgets — заглушка до v2. Не бросать исключение если таблицы нет.
+    try:
+        db = get_client()
+        result = (
+            db.table("budgets")
+            .select("limit_uzs")
+            .eq("user_id", user_id)
+            .eq("category", category)
+            .eq("month", month_date)
+            .execute()
+        )
+        if result.data:
+            return result.data[0]["limit_uzs"]
+        return None
+    except Exception:
+        return None
 
 
 async def get_goals(user_id: int) -> list:
