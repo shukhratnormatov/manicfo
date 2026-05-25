@@ -317,6 +317,8 @@ async def get_monthly_income_avg(user_id: int, months: int = 3) -> float:
 
 async def create_invite_token(owner_id: int) -> str:
     """Создаёт одноразовый invite-токен, действующий 48 часов."""
+    # Гарантируем что owner есть в users (FK constraint)
+    await ensure_user(owner_id, None)
     db = get_client()
     token = "inv_" + secrets.token_urlsafe(8)
     expires = (datetime.utcnow() + timedelta(hours=48)).isoformat()

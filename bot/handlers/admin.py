@@ -68,16 +68,19 @@ async def ban_user_cmd(message: Message):
 
 @router.message(Command("genlink"), RoleFilter("owner"))
 async def generate_invite_link(message: Message):
-    token = await db.create_invite_token(message.from_user.id)
-    bot_username = (await message.bot.get_me()).username
-    link = f"https://t.me/{bot_username}?start={token}"
-    await message.answer(
-        "🔗 Invite-ссылка готова:\n\n"
-        f"`{link}`\n\n"
-        "⏱ Действует 48 часов\n"
-        "🔂 Одноразовая",
-        parse_mode="Markdown",
-    )
+    try:
+        token = await db.create_invite_token(message.from_user.id)
+        bot_username = (await message.bot.get_me()).username
+        link = f"https://t.me/{bot_username}?start={token}"
+        await message.answer(
+            "🔗 Invite-ссылка готова:\n\n"
+            f"`{link}`\n\n"
+            "⏱ Действует 48 часов\n"
+            "🔂 Одноразовая",
+            parse_mode="Markdown",
+        )
+    except Exception as e:
+        await message.answer(f"❌ Ошибка при создании ссылки:\n<code>{e}</code>", parse_mode="HTML")
 
 
 @router.message(Command("users"), RoleFilter("owner"))
