@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message, CallbackQuery
 
-from bot.keyboards.inline import subs_actions_kb
+from bot.keyboards.inline import subs_kb
 from bot.services import supabase_db as db, claude_parser, currency as cur
 from bot.utils.formatters import format_sum, days_until
 
@@ -58,7 +58,7 @@ async def cmd_subs(message: Message):
             f"через {next_sub['days_until']} дн. ({format_sum(next_sub['amount_uzs'])} сум)"
         )
 
-    await message.answer(text, parse_mode="Markdown", reply_markup=subs_actions_kb())
+    await message.answer(text, parse_mode="Markdown", reply_markup=subs_kb())
 
 
 @router.message(Command("add_sub"))

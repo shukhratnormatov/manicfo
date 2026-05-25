@@ -6,6 +6,7 @@ from aiogram.types import Message
 from bot.services import supabase_db as db
 from bot.utils.formatters import format_sum
 from bot.utils.constants import CATEGORY_EMOJI
+from bot.keyboards.inline import back_to_menu_btn, history_item_kb
 
 router = Router()
 
@@ -39,7 +40,7 @@ async def cmd_stats(message: Message):
     sign = "+" if balance >= 0 else ""
     text += f"{'📈' if balance >= 0 else '📉'} Остаток: {sign}{format_sum(balance)} сум"
 
-    await message.answer(text, parse_mode="Markdown")
+    await message.answer(text, parse_mode="Markdown", reply_markup=back_to_menu_btn())
 
 
 @router.message(Command("week"))
@@ -63,17 +64,17 @@ async def cmd_week(message: Message):
     sign = "+" if balance >= 0 else ""
     text += f"{'📈' if balance >= 0 else '📉'} Баланс: {sign}{format_sum(balance)} сум"
 
-    await message.answer(text, parse_mode="Markdown")
+    await message.answer(text, parse_mode="Markdown", reply_markup=back_to_menu_btn())
 
 
 @router.message(Command("history"))
 async def cmd_history(message: Message):
     txns = await db.get_recent_transactions(message.from_user.id, limit=10)
     if not txns:
-        await message.answer("История транзакций пока пуста.")
+        await message.answer("История транзакций пока пуста.", reply_markup=back_to_menu_btn())
         return
 
-    text = "📋 *Последние транзакции*\n\n"
+    await message.answer("📋 *Последние транзакции*", parse_mode="Markdown")
     for t in txns:
         type_emoji = "🔴" if t["type"] == "expense" else "🟢"
         cat = t.get("category", "другое")
@@ -81,6 +82,9 @@ async def cmd_history(message: Message):
         desc = t.get("description", cat)
         amount = format_sum(float(t["amount_uzs"]))
         created = str(t["created_at"])[:10]
-        text += f"{type_emoji} {cat_emoji} {desc} — {amount} сум  _{created}_\n"
-
-    await message.answer(text, parse_mode="Markdown")
+        tx_text = f"{type_emoji} {cat_emoji} {desc} — {amount} сум\n_{created}_"
+        await message.answer(
+            tx_text,
+            parse_mode="Markdown",
+            reply_markup=history_item_kb(str(t["id"])),
+        )
