@@ -81,4 +81,61 @@ PARSE_SYSTEM_PROMPT = """
 
 Вход: "продлил vpn за 25к"
 Выход: {"type":"expense","amount":25000,"currency":"UZS","category":"подписки","description":"VPN","confidence":0.95}
+
+Вход: "Кроссовки 500к"
+Выход: {"type":"expense","amount":500000,"currency":"UZS","category":"одежда","description":"Кроссовки","confidence":0.90}
+
+Вход: "KFC 76000"
+Выход: {"type":"expense","amount":76000,"currency":"UZS","category":"еда_питание","description":"KFC","confidence":0.90}
+
+Вход: "500к на кофе"
+Выход: {"type":"expense","amount":500000,"currency":"UZS","category":"еда_питание","description":"Кофе","confidence":0.91}
+
+Вход: "90к такси"
+Выход: {"type":"expense","amount":90000,"currency":"UZS","category":"транспорт","description":"Такси","confidence":0.91}
+
+Вход: "Минус 250к на бенз"
+Выход: {"type":"expense","amount":250000,"currency":"UZS","category":"транспорт","description":"Бензин","confidence":0.93}
+
+Вход: "Обед и кофе 85000"
+Выход: {"type":"expense","amount":85000,"currency":"UZS","category":"еда_питание","description":"Обед и кофе","confidence":0.89}
+
+Вход: "Кроссы жене 750000"
+Выход: {"type":"expense","amount":750000,"currency":"UZS","category":"одежда","description":"Кроссовки жене","confidence":0.88}
+
+Вход: "Аптека ребенку 90000"
+Выход: {"type":"expense","amount":90000,"currency":"UZS","category":"семья_дети","description":"Аптека ребёнку","confidence":0.92}
+
+Вход: "Шиномонтаж 120к"
+Выход: {"type":"expense","amount":120000,"currency":"UZS","category":"транспорт","description":"Шиномонтаж","confidence":0.92}
+
+Вход: "Страховка авто 400к"
+Выход: {"type":"expense","amount":400000,"currency":"UZS","category":"транспорт","description":"Страховка авто","confidence":0.91}
+
+Вход: "WB 430000"
+Выход: {"type":"expense","amount":430000,"currency":"UZS","category":"одежда","description":"Wildberries","confidence":0.88}
+
+Вход: "Uzum 250000"
+Выход: {"type":"expense","amount":250000,"currency":"UZS","category":"другое","description":"Uzum","confidence":0.87}
+
+Вход: "Рассрочка iPhone 450$/месяц"
+Выход: {"type":"expense","amount":450,"currency":"USD","category":"ипотека_кредиты","description":"Рассрочка iPhone","confidence":0.90}
+
+Вход: "Аренда 500$"
+Выход: {"type":"expense","amount":500,"currency":"USD","category":"коммуналка","description":"Аренда квартиры","confidence":0.93}
+
+Вход: "Скинул за квартиру 300$"
+Выход: {"type":"expense","amount":300,"currency":"USD","category":"коммуналка","description":"Аренда квартиры","confidence":0.91}
+
+Вход: "Korzinka 560000"
+Выход: {"type":"expense","amount":560000,"currency":"UZS","category":"продукты","description":"Korzinka","confidence":0.94}
+
+Вход: "Makro 380000"
+Выход: {"type":"expense","amount":380000,"currency":"UZS","category":"продукты","description":"Makro","confidence":0.94}
+
+Вход: "Gemini 100$"
+Выход: {"type":"expense","amount":100,"currency":"USD","category":"подписки","description":"Gemini","confidence":0.95}
+
+Вход: "ChatGPT Plus 20$"
+Выход: {"type":"expense","amount":20,"currency":"USD","category":"подписки","description":"ChatGPT Plus","confidence":0.95}
 """

@@ -1,7 +1,7 @@
 import os
 from typing import Callable, Awaitable, Any, Dict
 from aiogram import BaseMiddleware
-from aiogram.types import TelegramObject, Message
+from aiogram.types import TelegramObject, Message, CallbackQuery
 from bot.services import supabase_db as db
 
 
@@ -12,7 +12,12 @@ class AuthMiddleware(BaseMiddleware):
         event: TelegramObject,
         data: Dict[str, Any],
     ) -> Any:
-        if not isinstance(event, Message):
+        if not isinstance(event, (Message, CallbackQuery)):
+            return await handler(event, data)
+
+        # /start обрабатывает незарегистрированных пользователей (invite flow)
+        # — пропускаем без проверки роли, хендлер разберётся сам
+        if isinstance(event, Message) and (event.text or "").startswith("/start"):
             return await handler(event, data)
 
         user_id = event.from_user.id

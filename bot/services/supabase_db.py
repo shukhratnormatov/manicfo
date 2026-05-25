@@ -1,5 +1,6 @@
 import os
-from datetime import date, datetime
+import secrets
+from datetime import date, datetime, timedelta
 from typing import Optional
 from supabase import create_client, Client
 
@@ -187,6 +188,32 @@ async def get_budget_limit(user_id: int, category: str, month_date: str) -> Opti
         return None
 
 
+async def update_transaction(transaction_id: str, user_id: int, **fields) -> bool:
+    """Обновляет транзакцию. Проверяет что принадлежит user_id."""
+    db = get_client()
+    result = (
+        db.table("transactions")
+        .update(fields)
+        .eq("id", transaction_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    return len(result.data) > 0
+
+
+async def delete_transaction(transaction_id: str, user_id: int) -> bool:
+    """Удаляет транзакцию. Проверяет что принадлежит user_id."""
+    db = get_client()
+    result = (
+        db.table("transactions")
+        .delete()
+        .eq("id", transaction_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    return len(result.data) > 0
+
+
 async def get_goals(user_id: int) -> list:
     db = get_client()
     result = (
@@ -286,3 +313,42 @@ async def get_monthly_income_avg(user_id: int, months: int = 3) -> float:
     if not rows:
         return 0
     return sum(r["amount_uzs"] for r in rows) / max(months, 1)
+
+
+async def create_invite_token(owner_id: int) -> str:
+    """Создаёт одноразовый invite-токен, действующий 48 часов."""
+    db = get_client()
+    token = "inv_" + secrets.token_urlsafe(8)
+    expires = (datetime.utcnow() + timedelta(hours=48)).isoformat()
+    db.table("invite_tokens").insert({
+        "token": token,
+        "created_by": owner_id,
+        "expires_at": expires,
+    }).execute()
+    return token
+
+
+async def use_invite_token(token: str, user_id: int) -> bool:
+    """Проверяет токен и выдаёт доступ пользователю. Возвращает True если успешно."""
+    db = get_client()
+    now = datetime.utcnow().isoformat()
+    result = (
+        db.table("invite_tokens")
+        .select("*")
+        .eq("token", token)
+        .eq("is_used", False)
+        .gt("expires_at", now)
+        .execute()
+    )
+    if not result.data:
+        return False  # токен не найден, уже использован или истёк
+
+    # Помечаем токен как использованный
+    db.table("invite_tokens").update(
+        {"is_used": True, "used_by": user_id}
+    ).eq("token", token).execute()
+
+    # Добавляем пользователя в access_control как beta
+    invited_by = result.data[0]["created_by"]
+    await add_beta_user(user_id, invited_by=invited_by)
+    return True
