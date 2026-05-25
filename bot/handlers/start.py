@@ -1,5 +1,5 @@
 from aiogram import Router, F
-from aiogram.filters import Command, StateFilter
+from aiogram.filters import Command, CommandStart, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message, CallbackQuery
@@ -17,10 +17,37 @@ class OnboardingStates(StatesGroup):
     waiting_goal_deadline = State()
 
 
-@router.message(Command("start"))
+@router.message(CommandStart())
 async def cmd_start(message: Message, state: FSMContext):
     await state.clear()
-    goals = await db.get_goals(message.from_user.id)
+    user_id = message.from_user.id
+
+    # Извлекаем deep link параметр (напр. inv_xxx из /start inv_xxx)
+    parts = (message.text or "").split()
+    args = parts[1] if len(parts) > 1 else None
+
+    # ── Invite-ссылка: незарегистрированный пользователь с токеном ──────────
+    if args and args.startswith("inv_"):
+        role = await db.get_user_role(user_id)
+        if role is None:
+            success = await db.use_invite_token(args, user_id)
+            if success:
+                await db.ensure_user(user_id, message.from_user.username)
+                await message.answer(
+                    "🎉 Добро пожаловать в maniCFO!\n"
+                    "Ты получил доступ по приглашению.\n\n"
+                    "Просто пиши о тратах: «потратил 50к на продукты»",
+                    reply_markup=get_main_menu(),
+                )
+            else:
+                await message.answer(
+                    "❌ Ссылка недействительна или истекла.\n"
+                    "Попроси у владельца новую ссылку."
+                )
+            return
+
+    # ── Стандартный онбординг для авторизованных ────────────────────────────
+    goals = await db.get_goals(user_id)
     if goals:
         await message.answer(
             "👋 С возвращением!\n\n"

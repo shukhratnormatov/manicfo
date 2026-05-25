@@ -15,6 +15,11 @@ class AuthMiddleware(BaseMiddleware):
         if not isinstance(event, (Message, CallbackQuery)):
             return await handler(event, data)
 
+        # /start обрабатывает незарегистрированных пользователей (invite flow)
+        # — пропускаем без проверки роли, хендлер разберётся сам
+        if isinstance(event, Message) and (event.text or "").startswith("/start"):
+            return await handler(event, data)
+
         user_id = event.from_user.id
         role = await db.get_user_role(user_id)
 
