@@ -5,6 +5,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message, CallbackQuery
 
 from bot.keyboards.inline import subs_kb
+from bot.keyboards.reply import MENU_BUTTONS
 from bot.services import supabase_db as db, claude_parser, currency as cur
 from bot.utils.formatters import format_sum, days_until
 
@@ -71,14 +72,14 @@ async def cmd_add_sub(event, state: FSMContext):
     await state.set_state(AddSubStates.waiting_name)
 
 
-@router.message(AddSubStates.waiting_name)
+@router.message(AddSubStates.waiting_name, ~F.text.in_(MENU_BUTTONS))
 async def add_sub_name(message: Message, state: FSMContext):
     await state.update_data(name=message.text.strip())
     await message.answer("Сумма и валюта? Например: 85к или 10$")
     await state.set_state(AddSubStates.waiting_amount)
 
 
-@router.message(AddSubStates.waiting_amount)
+@router.message(AddSubStates.waiting_amount, ~F.text.in_(MENU_BUTTONS))
 async def add_sub_amount(message: Message, state: FSMContext):
     text = message.text.strip().lower().replace(" ", "")
     currency = "UZS"
@@ -105,7 +106,7 @@ async def add_sub_amount(message: Message, state: FSMContext):
     await state.set_state(AddSubStates.waiting_day)
 
 
-@router.message(AddSubStates.waiting_day)
+@router.message(AddSubStates.waiting_day, ~F.text.in_(MENU_BUTTONS))
 async def add_sub_day(message: Message, state: FSMContext):
     try:
         day = int(message.text.strip())

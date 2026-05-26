@@ -3,6 +3,7 @@ from datetime import date
 
 from aiogram import Router, F
 from aiogram.filters import StateFilter
+from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import default_state
 from aiogram.types import Message, CallbackQuery
 
@@ -33,38 +34,44 @@ async def expire_cancel_button(msg: Message, tx_id: str) -> None:
 
 # ── Маппинг кнопок ReplyKeyboard ────────────────────────────────────────────
 
-@router.message(StateFilter(default_state), F.text == "📊 Статистика")
-async def menu_btn_stats(message: Message):
+@router.message(F.text == "📊 Статистика")
+async def menu_btn_stats(message: Message, state: FSMContext):
+    await state.clear()
     from bot.handlers.stats import cmd_stats
     await cmd_stats(message)
 
 
-@router.message(StateFilter(default_state), F.text == "🎯 Цели")
-async def menu_btn_goals(message: Message):
+@router.message(F.text == "🎯 Цели")
+async def menu_btn_goals(message: Message, state: FSMContext):
+    await state.clear()
     from bot.handlers.goals import cmd_goals
     await cmd_goals(message)
 
 
-@router.message(StateFilter(default_state), F.text == "📋 История")
-async def menu_btn_history(message: Message):
+@router.message(F.text == "📋 История")
+async def menu_btn_history(message: Message, state: FSMContext):
+    await state.clear()
     from bot.handlers.stats import cmd_history
     await cmd_history(message)
 
 
-@router.message(StateFilter(default_state), F.text == "📱 Подписки")
-async def menu_btn_subs(message: Message):
+@router.message(F.text == "📱 Подписки")
+async def menu_btn_subs(message: Message, state: FSMContext):
+    await state.clear()
     from bot.handlers.subscriptions import cmd_subs
     await cmd_subs(message)
 
 
-@router.message(StateFilter(default_state), F.text == "💱 Курсы")
-async def menu_btn_rates(message: Message):
+@router.message(F.text == "💱 Курсы")
+async def menu_btn_rates(message: Message, state: FSMContext):
+    await state.clear()
     from bot.handlers.rates import cmd_rates
     await cmd_rates(message)
 
 
-@router.message(StateFilter(default_state), F.text == "📅 Неделя")
-async def menu_btn_week(message: Message):
+@router.message(F.text == "📅 Неделя")
+async def menu_btn_week(message: Message, state: FSMContext):
+    await state.clear()
     from bot.handlers.stats import cmd_week
     await cmd_week(message)
 

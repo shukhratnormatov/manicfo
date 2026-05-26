@@ -5,6 +5,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message, CallbackQuery
 
 from bot.keyboards.inline import goals_actions_kb, goals_kb, skip_kb
+from bot.keyboards.reply import MENU_BUTTONS
 from bot.services import supabase_db as db, analytics
 from bot.utils.formatters import format_sum, progress_bar, format_percent
 
@@ -70,7 +71,7 @@ async def cmd_add_goal(event, state: FSMContext):
     await state.set_state(AddGoalStates.waiting_name)
 
 
-@router.message(AddGoalStates.waiting_name)
+@router.message(AddGoalStates.waiting_name, ~F.text.in_(MENU_BUTTONS))
 async def add_goal_name(message: Message, state: FSMContext):
     await state.update_data(name=message.text.strip())
     await message.answer(
@@ -80,7 +81,7 @@ async def add_goal_name(message: Message, state: FSMContext):
     await state.set_state(AddGoalStates.waiting_amount)
 
 
-@router.message(AddGoalStates.waiting_amount)
+@router.message(AddGoalStates.waiting_amount, ~F.text.in_(MENU_BUTTONS))
 async def add_goal_amount(message: Message, state: FSMContext):
     text = message.text.strip().lower().replace(" ", "")
     try:
@@ -108,7 +109,7 @@ async def skip_goal_deadline(callback: CallbackQuery, state: FSMContext):
     await _finish_add_goal(callback.message, state, None)
 
 
-@router.message(AddGoalStates.waiting_deadline)
+@router.message(AddGoalStates.waiting_deadline, ~F.text.in_(MENU_BUTTONS))
 async def add_goal_deadline(message: Message, state: FSMContext):
     deadline = None
     try:
@@ -163,7 +164,7 @@ async def cmd_save(event, state: FSMContext):
     await state.set_state(SaveGoalStates.waiting_goal_choice)
 
 
-@router.message(SaveGoalStates.waiting_goal_choice)
+@router.message(SaveGoalStates.waiting_goal_choice, ~F.text.in_(MENU_BUTTONS))
 async def save_goal_choice(message: Message, state: FSMContext):
     data = await state.get_data()
     goals = data.get("goals", [])
@@ -180,7 +181,7 @@ async def save_goal_choice(message: Message, state: FSMContext):
     await state.set_state(SaveGoalStates.waiting_amount)
 
 
-@router.message(SaveGoalStates.waiting_amount)
+@router.message(SaveGoalStates.waiting_amount, ~F.text.in_(MENU_BUTTONS))
 async def save_goal_amount(message: Message, state: FSMContext):
     text = message.text.strip().lower().replace(" ", "")
     try:
