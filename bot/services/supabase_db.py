@@ -297,6 +297,116 @@ async def add_subscription(
     return result.data[0] if result.data else {}
 
 
+async def update_subscription(sub_id: str, user_id: int, **fields) -> bool:
+    """Обновляет подписку. Проверяет что принадлежит user_id."""
+    db = get_client()
+    result = (
+        db.table("subscriptions")
+        .update(fields)
+        .eq("id", sub_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    return len(result.data) > 0
+
+
+async def delete_subscription(sub_id: str, user_id: int) -> bool:
+    """Деактивирует подписку (soft delete)."""
+    db = get_client()
+    result = (
+        db.table("subscriptions")
+        .update({"is_active": False})
+        .eq("id", sub_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    return len(result.data) > 0
+
+
+async def update_goal(goal_id: str, user_id: int, **fields) -> bool:
+    """Обновляет цель. Проверяет что принадлежит user_id."""
+    db = get_client()
+    result = (
+        db.table("goals")
+        .update(fields)
+        .eq("id", goal_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    return len(result.data) > 0
+
+
+async def delete_goal(goal_id: str, user_id: int) -> bool:
+    """Деактивирует цель (soft delete)."""
+    db = get_client()
+    result = (
+        db.table("goals")
+        .update({"is_active": False})
+        .eq("id", goal_id)
+        .eq("user_id", user_id)
+        .execute()
+    )
+    return len(result.data) > 0
+
+
+async def find_goal_by_keyword(user_id: int, keyword: str) -> Optional[dict]:
+    """Ищет активную цель по ключевому слову в названии. Возвращает первую найденную."""
+    goals = await get_goals(user_id)
+    kw_lower = keyword.lower()
+    for goal in goals:
+        if kw_lower in goal["name"].lower():
+            return goal
+    # Нет совпадения — возвращаем первую цель (по приоритету)
+    return goals[0] if goals else None
+
+
+async def set_monthly_budget(user_id: int, amount_uzs: float) -> None:
+    """Устанавливает (или обновляет) месячный бюджет."""
+    db = get_client()
+    month_date = date.today().replace(day=1).isoformat()
+    db.table("monthly_budget").upsert({
+        "user_id": user_id,
+        "month": month_date,
+        "budget_uzs": amount_uzs,
+    }).execute()
+
+
+async def get_monthly_budget(user_id: int) -> Optional[float]:
+    """Возвращает установленный бюджет на текущий месяц или None."""
+    try:
+        db = get_client()
+        month_date = date.today().replace(day=1).isoformat()
+        result = (
+            db.table("monthly_budget")
+            .select("budget_uzs")
+            .eq("user_id", user_id)
+            .eq("month", month_date)
+            .execute()
+        )
+        if result.data:
+            return float(result.data[0]["budget_uzs"])
+        return None
+    except Exception:
+        return None
+
+
+async def get_total_expenses(user_id: int, year: int, month: int) -> float:
+    """Возвращает сумму всех расходов за указанный месяц."""
+    db = get_client()
+    start = f"{year}-{month:02d}-01"
+    end = f"{year}-{month + 1:02d}-01" if month < 12 else f"{year + 1}-01-01"
+    result = (
+        db.table("transactions")
+        .select("amount_uzs")
+        .eq("user_id", user_id)
+        .eq("type", "expense")
+        .gte("created_at", start)
+        .lt("created_at", end)
+        .execute()
+    )
+    return sum(r["amount_uzs"] for r in (result.data or []))
+
+
 async def get_monthly_income_avg(user_id: int, months: int = 3) -> float:
     from datetime import timedelta
     db = get_client()

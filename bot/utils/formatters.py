@@ -12,6 +12,17 @@ def format_sum(amount: float, currency: str = "UZS") -> str:
     return f"{amount:,.0f}".replace(",", " ")
 
 
+def format_amount_display(amount: float, currency: str, amount_uzs: float) -> str:
+    """Форматирует сумму: '500 $ (6 350 000 сум)' или '50 000 сум' для UZS."""
+    if currency == "UZS":
+        return f"{format_sum(amount_uzs)} сум"
+    elif currency == "USD":
+        return f"{amount:.0f} $ ({format_sum(amount_uzs)} сум)"
+    elif currency == "RUB":
+        return f"{amount:.0f} ₽ ({format_sum(amount_uzs)} сум)"
+    return f"{format_sum(amount_uzs)} сум"
+
+
 def progress_bar(current: float, target: float, length: int = 16) -> str:
     if target <= 0:
         return "░" * length

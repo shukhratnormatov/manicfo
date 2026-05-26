@@ -19,6 +19,15 @@ from bot.services.supabase_db import (
     get_budget_limit,
     update_transaction,
     delete_transaction,
+    update_subscription,
+    delete_subscription,
+    update_goal,
+    delete_goal,
+    find_goal_by_keyword,
+    get_goals,
+    set_monthly_budget,
+    get_monthly_budget,
+    get_total_expenses,
 )
 
 USER_ID = 123456789
@@ -316,3 +325,160 @@ class TestDeleteTransaction:
         with patch(MODULE, return_value=mock_db):
             result = await delete_transaction("no-such-id", USER_ID)
         assert result is False
+
+
+# ── update_subscription ───────────────────────────────────────────────────────
+
+class TestUpdateSubscription:
+    async def test_returns_true_when_updated(self, db_chain):
+        mock_db = db_chain(data=[{"id": "sub-1"}])
+        with patch(MODULE, return_value=mock_db):
+            result = await update_subscription("sub-1", USER_ID, name="NewName")
+        assert result is True
+
+    async def test_returns_false_when_not_found(self, db_chain):
+        mock_db = db_chain(data=[])
+        with patch(MODULE, return_value=mock_db):
+            result = await update_subscription("no-such", USER_ID, name="x")
+        assert result is False
+
+
+# ── delete_subscription ───────────────────────────────────────────────────────
+
+class TestDeleteSubscription:
+    async def test_soft_deletes_subscription(self, db_chain):
+        mock_db = db_chain(data=[{"id": "sub-1", "is_active": False}])
+        with patch(MODULE, return_value=mock_db):
+            result = await delete_subscription("sub-1", USER_ID)
+        assert result is True
+        mock_db.update.assert_called_with({"is_active": False})
+
+    async def test_returns_false_when_not_found(self, db_chain):
+        mock_db = db_chain(data=[])
+        with patch(MODULE, return_value=mock_db):
+            result = await delete_subscription("no-such", USER_ID)
+        assert result is False
+
+
+# ── update_goal ───────────────────────────────────────────────────────────────
+
+class TestUpdateGoal:
+    async def test_returns_true_when_updated(self, db_chain):
+        mock_db = db_chain(data=[{"id": "goal-1"}])
+        with patch(MODULE, return_value=mock_db):
+            result = await update_goal("goal-1", USER_ID, name="Отпуск")
+        assert result is True
+
+    async def test_returns_false_when_not_found(self, db_chain):
+        mock_db = db_chain(data=[])
+        with patch(MODULE, return_value=mock_db):
+            result = await update_goal("no-such", USER_ID, name="x")
+        assert result is False
+
+
+# ── delete_goal ───────────────────────────────────────────────────────────────
+
+class TestDeleteGoal:
+    async def test_soft_deletes_goal(self, db_chain):
+        mock_db = db_chain(data=[{"id": "goal-1", "is_active": False}])
+        with patch(MODULE, return_value=mock_db):
+            result = await delete_goal("goal-1", USER_ID)
+        assert result is True
+        mock_db.update.assert_called_with({"is_active": False})
+
+    async def test_returns_false_when_not_found(self, db_chain):
+        mock_db = db_chain(data=[])
+        with patch(MODULE, return_value=mock_db):
+            result = await delete_goal("no-such", USER_ID)
+        assert result is False
+
+
+# ── find_goal_by_keyword ──────────────────────────────────────────────────────
+
+class TestFindGoalByKeyword:
+    async def test_finds_goal_by_name_substring(self, db_chain):
+        goals = [
+            {"id": "g1", "name": "Машина", "target_amount": 50_000_000,
+             "saved_amount": 0, "priority": 1, "is_active": True},
+            {"id": "g2", "name": "Отпуск в Турции", "target_amount": 10_000_000,
+             "saved_amount": 0, "priority": 2, "is_active": True},
+        ]
+        mock_db = db_chain(data=goals)
+        with patch(MODULE, return_value=mock_db):
+            result = await find_goal_by_keyword(USER_ID, "Турц")
+        assert result is not None
+        assert result["id"] == "g2"
+
+    async def test_returns_first_goal_when_no_match(self, db_chain):
+        goals = [
+            {"id": "g1", "name": "Машина", "target_amount": 50_000_000,
+             "saved_amount": 0, "priority": 1, "is_active": True},
+        ]
+        mock_db = db_chain(data=goals)
+        with patch(MODULE, return_value=mock_db):
+            result = await find_goal_by_keyword(USER_ID, "ремонт")
+        assert result is not None
+        assert result["id"] == "g1"
+
+    async def test_returns_none_when_no_goals(self, db_chain):
+        mock_db = db_chain(data=[])
+        with patch(MODULE, return_value=mock_db):
+            result = await find_goal_by_keyword(USER_ID, "что угодно")
+        assert result is None
+
+
+# ── set_monthly_budget / get_monthly_budget ───────────────────────────────────
+
+class TestMonthlyBudget:
+    async def test_set_calls_upsert(self, db_chain):
+        mock_db = db_chain(data=[])
+        with patch(MODULE, return_value=mock_db):
+            await set_monthly_budget(USER_ID, 3_000_000)
+        mock_db.upsert.assert_called_once()
+        payload = mock_db.upsert.call_args[0][0]
+        assert payload["user_id"] == USER_ID
+        assert payload["budget_uzs"] == 3_000_000
+
+    async def test_get_returns_value_when_found(self, db_chain):
+        mock_db = db_chain(data=[{"budget_uzs": 5_000_000}])
+        with patch(MODULE, return_value=mock_db):
+            result = await get_monthly_budget(USER_ID)
+        assert result == 5_000_000.0
+
+    async def test_get_returns_none_when_not_set(self, db_chain):
+        mock_db = db_chain(data=[])
+        with patch(MODULE, return_value=mock_db):
+            result = await get_monthly_budget(USER_ID)
+        assert result is None
+
+    async def test_get_returns_none_on_exception(self):
+        broken = MagicMock()
+        broken.table.side_effect = Exception("DB error")
+        with patch(MODULE, return_value=broken):
+            result = await get_monthly_budget(USER_ID)
+        assert result is None
+
+
+# ── get_total_expenses ────────────────────────────────────────────────────────
+
+class TestGetTotalExpenses:
+    async def test_sums_expense_rows(self, db_chain):
+        rows = [{"amount_uzs": 200_000}, {"amount_uzs": 300_000}]
+        mock_db = db_chain(data=rows)
+        with patch(MODULE, return_value=mock_db):
+            total = await get_total_expenses(USER_ID, 2026, 5)
+        assert total == 500_000
+
+    async def test_empty_returns_zero(self, db_chain):
+        mock_db = db_chain(data=[])
+        with patch(MODULE, return_value=mock_db):
+            total = await get_total_expenses(USER_ID, 2026, 5)
+        assert total == 0
+
+    async def test_december_wraps_year_correctly(self, db_chain):
+        """Декабрь: end = следующий год январь."""
+        mock_db = db_chain(data=[])
+        with patch(MODULE, return_value=mock_db):
+            # Не должно бросать исключение
+            total = await get_total_expenses(USER_ID, 2026, 12)
+        assert total == 0

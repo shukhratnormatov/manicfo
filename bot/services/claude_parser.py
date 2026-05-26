@@ -27,9 +27,7 @@ async def parse_transaction(text: str) -> Optional[dict]:
         raw = response.content[0].text.strip()
         raw = raw.replace("```json", "").replace("```", "").strip()
         data = json.loads(raw)
-        if data.get("type") not in ("income", "expense", "unknown"):
-            return None
-        if data.get("type") == "unknown":
+        if data.get("type") not in ("income", "expense", "unknown", "intent"):
             return None
         return data
     except (json.JSONDecodeError, Exception):

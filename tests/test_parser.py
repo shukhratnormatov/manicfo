@@ -71,13 +71,33 @@ class TestParseTransaction:
         assert result["type"] == "income"
         assert result["amount"] == 3_000_000
 
-    async def test_unknown_type_returns_none(self):
+    async def test_unknown_type_returns_dict(self):
+        """type='unknown' теперь возвращается как dict — handle_free_text покажет 'не понял'."""
         payload = {"type": "unknown", "amount": 0}
         with patch("bot.services.claude_parser.get_client",
                    return_value=_make_client(json.dumps(payload))):
             result = await parse_transaction("привет как дела")
 
-        assert result is None
+        assert result is not None
+        assert result["type"] == "unknown"
+
+    async def test_intent_type_returns_dict(self):
+        """type='intent' должен возвращаться как dict для диспетчеризации в handle_free_text."""
+        payload = {
+            "type": "intent",
+            "intent_action": "show_stats",
+            "amount": 0,
+            "currency": "UZS",
+            "category": "другое",
+            "description": "",
+        }
+        with patch("bot.services.claude_parser.get_client",
+                   return_value=_make_client(json.dumps(payload))):
+            result = await parse_transaction("покажи статистику")
+
+        assert result is not None
+        assert result["type"] == "intent"
+        assert result["intent_action"] == "show_stats"
 
     async def test_invalid_json_returns_none(self):
         with patch("bot.services.claude_parser.get_client",

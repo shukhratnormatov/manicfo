@@ -74,3 +74,36 @@ def skip_kb(callback_data: str = "skip") -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="⏭ Пропустить", callback_data=callback_data)],
     ])
+
+
+def sub_item_kb(sub_id: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="✏️ Изменить", callback_data=f"edit:sub:{sub_id}"),
+            InlineKeyboardButton(text="🗑 Удалить", callback_data=f"delete:sub:{sub_id}"),
+        ],
+    ])
+
+
+def goal_item_kb(goal_id: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="✏️ Изменить", callback_data=f"edit:goal:{goal_id}"),
+            InlineKeyboardButton(text="🗑 Удалить", callback_data=f"delete:goal:{goal_id}"),
+        ],
+        [InlineKeyboardButton(text="💳 Пополнить", callback_data="goal_save")],
+    ])
+
+
+def budget_empty_kb() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="💰 Установить бюджет", callback_data="budget:set")],
+        [InlineKeyboardButton(text="🏠 Меню", callback_data="nav:menu")],
+    ])
+
+
+def budget_set_kb() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="✏️ Изменить бюджет", callback_data="budget:set")],
+        [InlineKeyboardButton(text="🏠 Меню", callback_data="nav:menu")],
+    ])

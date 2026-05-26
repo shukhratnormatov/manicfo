@@ -47,14 +47,27 @@ PARSE_SYSTEM_PROMPT = """
 - Если валюта не указана — UZS по умолчанию
 - Ключевые слова расхода: потратил, купил, заплатил, оплатил, взял, сходил
 - Ключевые слова дохода: получил, заработал, пришло, перевели, зарплата
+- Если сумма явно не указана или не может быть определена — используй amount=0 и type="unknown"
+- Нельзя придумывать сумму — только парсить то, что написано
+
+Правило для интентов (запросы на просмотр):
+- Если пользователь просит что-то показать/открыть — используй type="intent"
+- "покажи статистику", "статистика", "мои расходы" → intent_action="show_stats"
+- "мои цели", "накопления", "покажи цели" → intent_action="show_goals"
+- "история", "последние операции", "что тратил" → intent_action="show_history"
+- "подписки", "мои подписки" → intent_action="show_subs"
+- "курс", "курсы валют", "доллар сегодня" → intent_action="show_rates"
+- "неделя", "итоги недели" → intent_action="show_week"
+- "бюджет", "мой бюджет", "сколько осталось" → intent_action="show_budget"
 
 Возвращай JSON:
 {
-  "type": "expense" | "income" | "unknown",
-  "amount": число (всегда числом, без пробелов),
+  "type": "expense" | "income" | "unknown" | "intent",
+  "amount": число (всегда числом, 0 если неизвестно),
   "currency": "UZS" | "USD" | "RUB",
   "category": "одна из категорий",
   "description": "краткое описание на русском",
+  "intent_action": "show_stats" | "show_goals" | "show_history" | "show_subs" | "show_rates" | "show_week" | "show_budget" (только для type=intent),
   "confidence": 0.0-1.0
 }
 
@@ -138,4 +151,28 @@ PARSE_SYSTEM_PROMPT = """
 
 Вход: "ChatGPT Plus 20$"
 Выход: {"type":"expense","amount":20,"currency":"USD","category":"подписки","description":"ChatGPT Plus","confidence":0.95}
+
+Вход: "покажи статистику"
+Выход: {"type":"intent","intent_action":"show_stats","amount":0,"currency":"UZS","category":"другое","description":"","confidence":1.0}
+
+Вход: "мои цели"
+Выход: {"type":"intent","intent_action":"show_goals","amount":0,"currency":"UZS","category":"другое","description":"","confidence":1.0}
+
+Вход: "история"
+Выход: {"type":"intent","intent_action":"show_history","amount":0,"currency":"UZS","category":"другое","description":"","confidence":1.0}
+
+Вход: "мои подписки"
+Выход: {"type":"intent","intent_action":"show_subs","amount":0,"currency":"UZS","category":"другое","description":"","confidence":1.0}
+
+Вход: "курс доллара"
+Выход: {"type":"intent","intent_action":"show_rates","amount":0,"currency":"UZS","category":"другое","description":"","confidence":1.0}
+
+Вход: "итоги недели"
+Выход: {"type":"intent","intent_action":"show_week","amount":0,"currency":"UZS","category":"другое","description":"","confidence":1.0}
+
+Вход: "мой бюджет"
+Выход: {"type":"intent","intent_action":"show_budget","amount":0,"currency":"UZS","category":"другое","description":"","confidence":1.0}
+
+Вход: "купил что-то"
+Выход: {"type":"unknown","amount":0,"currency":"UZS","category":"другое","description":"","confidence":0.1}
 """

@@ -10,7 +10,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from aiogram.types import BotCommand
 
 from bot.middlewares.auth import AuthMiddleware
-from bot.handlers import start, transactions, goals, stats, rates, subscriptions, admin, edit
+from bot.handlers import start, transactions, goals, stats, rates, subscriptions, admin, edit, budget
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -24,6 +24,7 @@ async def on_startup(bot: Bot) -> None:
         BotCommand(command="subs",    description="📱 Подписки"),
         BotCommand(command="rates",   description="💱 Курс валют"),
         BotCommand(command="week",    description="📅 Итоги недели"),
+        BotCommand(command="budget",   description="💰 Месячный бюджет"),
         BotCommand(command="help",    description="❓ Помощь"),
     ])
     logger.info("Bot commands registered.")
@@ -41,6 +42,7 @@ async def main():
     dp.include_router(admin.router)
     dp.include_router(start.router)
     dp.include_router(edit.router)      # FSM редактирования — до transactions
+    dp.include_router(budget.router)    # Бюджет — до transactions (меню-кнопка)
     dp.include_router(goals.router)
     dp.include_router(stats.router)
     dp.include_router(rates.router)

@@ -4,7 +4,7 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message, CallbackQuery
 
-from bot.keyboards.inline import subs_kb
+from bot.keyboards.inline import subs_kb, sub_item_kb
 from bot.keyboards.reply import MENU_BUTTONS
 from bot.services import supabase_db as db, claude_parser, currency as cur
 from bot.utils.formatters import format_sum, days_until
@@ -45,21 +45,23 @@ async def cmd_subs(message: Message):
     usd_rate = rates.get("USD", 12700)
     total_usd = total_uzs / usd_rate
 
-    text = "📱 *Твои подписки*\n\n"
-    text += f"✅ Активные — {format_sum(total_uzs)} сум/мес (~${total_usd:.1f})\n\n"
-
-    for i, sub in enumerate(sorted(subs, key=lambda x: x["billing_day"] or 31), 1):
-        day = sub.get("billing_day", "?")
-        text += f"{i}. {sub['name']}  {format_sum(sub['amount_uzs'])} сум • {day}-го числа\n"
+    header = f"📱 *Твои подписки*\n✅ Итого — {format_sum(total_uzs)} сум/мес (~${total_usd:.1f})"
 
     next_sub = _get_next_billing(subs)
     if next_sub:
-        text += (
-            f"\n⏰ Ближайшее: {next_sub['name']} — "
+        header += (
+            f"\n⏰ Ближайшее: *{next_sub['name']}* — "
             f"через {next_sub['days_until']} дн. ({format_sum(next_sub['amount_uzs'])} сум)"
         )
 
-    await message.answer(text, parse_mode="Markdown", reply_markup=subs_kb())
+    await message.answer(header, parse_mode="Markdown")
+
+    for sub in sorted(subs, key=lambda x: x["billing_day"] or 31):
+        day = sub.get("billing_day", "?")
+        text = f"📱 *{sub['name']}* — {format_sum(sub['amount_uzs'])} сум/мес • {day}-го числа"
+        await message.answer(text, parse_mode="Markdown", reply_markup=sub_item_kb(str(sub["id"])))
+
+    await message.answer("Управление подписками:", reply_markup=subs_kb())
 
 
 @router.message(Command("add_sub"))
