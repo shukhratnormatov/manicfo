@@ -367,7 +367,7 @@ async def set_monthly_budget(user_id: int, amount_uzs: float) -> None:
     db.table("monthly_budget").upsert({
         "user_id": user_id,
         "month": month_date,
-        "budget_uzs": amount_uzs,
+        "amount_uzs": amount_uzs,
     }).execute()
 
 
@@ -378,13 +378,13 @@ async def get_monthly_budget(user_id: int) -> Optional[float]:
         month_date = date.today().replace(day=1).isoformat()
         result = (
             db.table("monthly_budget")
-            .select("budget_uzs")
+            .select("amount_uzs")
             .eq("user_id", user_id)
             .eq("month", month_date)
             .execute()
         )
         if result.data:
-            return float(result.data[0]["budget_uzs"])
+            return float(result.data[0]["amount_uzs"])
         return None
     except Exception:
         return None

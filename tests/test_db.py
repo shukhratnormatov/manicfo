@@ -437,10 +437,10 @@ class TestMonthlyBudget:
         mock_db.upsert.assert_called_once()
         payload = mock_db.upsert.call_args[0][0]
         assert payload["user_id"] == USER_ID
-        assert payload["budget_uzs"] == 3_000_000
+        assert payload["amount_uzs"] == 3_000_000
 
     async def test_get_returns_value_when_found(self, db_chain):
-        mock_db = db_chain(data=[{"budget_uzs": 5_000_000}])
+        mock_db = db_chain(data=[{"amount_uzs": 5_000_000}])
         with patch(MODULE, return_value=mock_db):
             result = await get_monthly_budget(USER_ID)
         assert result == 5_000_000.0
