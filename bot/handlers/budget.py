@@ -69,6 +69,16 @@ async def budget_set_cb(callback: CallbackQuery, state: FSMContext):
     await state.set_state(BudgetStates.waiting_amount)
 
 
+@router.callback_query(F.data == "budget:delete")
+async def budget_delete_cb(callback: CallbackQuery):
+    deleted = await db.delete_monthly_budget(callback.from_user.id)
+    await callback.answer()
+    if deleted:
+        await callback.message.edit_text("🗑 Бюджет на этот месяц удалён")
+    else:
+        await callback.message.answer("Бюджет не был установлен")
+
+
 @router.message(BudgetStates.waiting_amount, ~F.text.in_(MENU_BUTTONS))
 async def budget_amount_input(message: Message, state: FSMContext):
     text = message.text.strip().lower().replace(" ", "")

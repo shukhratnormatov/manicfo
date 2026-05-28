@@ -361,14 +361,46 @@ async def find_goal_by_keyword(user_id: int, keyword: str) -> Optional[dict]:
 
 
 async def set_monthly_budget(user_id: int, amount_uzs: float) -> None:
-    """Устанавливает (или обновляет) месячный бюджет."""
+    """Устанавливает (или обновляет) месячный бюджет на текущий месяц.
+
+    Без UNIQUE-constraint на (user_id, month) делаем явный select → update/insert,
+    иначе upsert по PK (id) каждый раз создаёт новую строку.
+    """
     db = get_client()
     month_date = date.today().replace(day=1).isoformat()
-    db.table("monthly_budget").upsert({
-        "user_id": user_id,
-        "month": month_date,
-        "amount_uzs": amount_uzs,
-    }).execute()
+
+    existing = (
+        db.table("monthly_budget")
+        .select("id")
+        .eq("user_id", user_id)
+        .eq("month", month_date)
+        .execute()
+    )
+
+    if existing.data:
+        db.table("monthly_budget").update(
+            {"amount_uzs": amount_uzs}
+        ).eq("user_id", user_id).eq("month", month_date).execute()
+    else:
+        db.table("monthly_budget").insert({
+            "user_id": user_id,
+            "month": month_date,
+            "amount_uzs": amount_uzs,
+        }).execute()
+
+
+async def delete_monthly_budget(user_id: int) -> bool:
+    """Удаляет бюджет на текущий месяц. Возвращает True если что-то удалили."""
+    db = get_client()
+    month_date = date.today().replace(day=1).isoformat()
+    result = (
+        db.table("monthly_budget")
+        .delete()
+        .eq("user_id", user_id)
+        .eq("month", month_date)
+        .execute()
+    )
+    return len(result.data) > 0
 
 
 async def get_monthly_budget(user_id: int) -> Optional[float]:

@@ -104,6 +104,9 @@ def budget_empty_kb() -> InlineKeyboardMarkup:
 
 def budget_set_kb() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="✏️ Изменить бюджет", callback_data="budget:set")],
+        [
+            InlineKeyboardButton(text="✏️ Изменить", callback_data="budget:set"),
+            InlineKeyboardButton(text="🗑 Удалить", callback_data="budget:delete"),
+        ],
         [InlineKeyboardButton(text="🏠 Меню", callback_data="nav:menu")],
     ])

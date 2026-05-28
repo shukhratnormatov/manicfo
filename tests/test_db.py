@@ -27,6 +27,7 @@ from bot.services.supabase_db import (
     get_goals,
     set_monthly_budget,
     get_monthly_budget,
+    delete_monthly_budget,
     get_total_expenses,
 )
 
@@ -430,14 +431,26 @@ class TestFindGoalByKeyword:
 # ── set_monthly_budget / get_monthly_budget ───────────────────────────────────
 
 class TestMonthlyBudget:
-    async def test_set_calls_upsert(self, db_chain):
+    async def test_set_inserts_when_no_existing_row(self, db_chain):
+        """Если записи нет — делаем insert."""
         mock_db = db_chain(data=[])
         with patch(MODULE, return_value=mock_db):
             await set_monthly_budget(USER_ID, 3_000_000)
-        mock_db.upsert.assert_called_once()
-        payload = mock_db.upsert.call_args[0][0]
+        mock_db.insert.assert_called_once()
+        payload = mock_db.insert.call_args[0][0]
         assert payload["user_id"] == USER_ID
         assert payload["amount_uzs"] == 3_000_000
+        # update вызываться НЕ должен
+        mock_db.update.assert_not_called()
+
+    async def test_set_updates_when_existing_row(self, db_chain):
+        """Если запись на этот месяц уже есть — делаем update."""
+        mock_db = db_chain(data=[{"id": "existing-uuid"}])
+        with patch(MODULE, return_value=mock_db):
+            await set_monthly_budget(USER_ID, 10_000_000)
+        mock_db.update.assert_called_once_with({"amount_uzs": 10_000_000})
+        # insert вызываться НЕ должен
+        mock_db.insert.assert_not_called()
 
     async def test_get_returns_value_when_found(self, db_chain):
         mock_db = db_chain(data=[{"amount_uzs": 5_000_000}])
@@ -482,3 +495,20 @@ class TestGetTotalExpenses:
             # Не должно бросать исключение
             total = await get_total_expenses(USER_ID, 2026, 12)
         assert total == 0
+
+
+# ── delete_monthly_budget ─────────────────────────────────────────────────────
+
+class TestDeleteMonthlyBudget:
+    async def test_returns_true_when_deleted(self, db_chain):
+        mock_db = db_chain(data=[{"id": "budget-1"}])
+        with patch(MODULE, return_value=mock_db):
+            result = await delete_monthly_budget(USER_ID)
+        assert result is True
+        mock_db.delete.assert_called_once()
+
+    async def test_returns_false_when_nothing_to_delete(self, db_chain):
+        mock_db = db_chain(data=[])
+        with patch(MODULE, return_value=mock_db):
+            result = await delete_monthly_budget(USER_ID)
+        assert result is False
