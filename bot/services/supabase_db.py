@@ -472,6 +472,18 @@ async def create_invite_token(owner_id: int) -> str:
     return token
 
 
+async def get_all_active_users() -> list:
+    """Возвращает список user_id всех активных пользователей (owner + beta, не banned)."""
+    db = get_client()
+    result = (
+        db.table("access_control")
+        .select("user_id")
+        .in_("role", ["owner", "beta"])
+        .execute()
+    )
+    return [row["user_id"] for row in (result.data or [])]
+
+
 async def use_invite_token(token: str, user_id: int) -> bool:
     """Проверяет токен и выдаёт доступ пользователю. Возвращает True если успешно."""
     db = get_client()

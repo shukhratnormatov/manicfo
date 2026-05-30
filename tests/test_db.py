@@ -29,6 +29,7 @@ from bot.services.supabase_db import (
     get_monthly_budget,
     delete_monthly_budget,
     get_total_expenses,
+    get_all_active_users,
 )
 
 USER_ID = 123456789
@@ -512,3 +513,33 @@ class TestDeleteMonthlyBudget:
         with patch(MODULE, return_value=mock_db):
             result = await delete_monthly_budget(USER_ID)
         assert result is False
+
+
+# ── get_all_active_users ──────────────────────────────────────────────────────
+
+class TestGetAllActiveUsers:
+    async def test_returns_list_of_user_ids(self, db_chain):
+        rows = [{"user_id": 111}, {"user_id": 222}, {"user_id": 333}]
+        mock_db = db_chain(data=rows)
+        with patch(MODULE, return_value=mock_db):
+            result = await get_all_active_users()
+        assert result == [111, 222, 333]
+
+    async def test_empty_table_returns_empty_list(self, db_chain):
+        mock_db = db_chain(data=[])
+        with patch(MODULE, return_value=mock_db):
+            result = await get_all_active_users()
+        assert result == []
+
+    async def test_queries_owner_and_beta_roles(self, db_chain):
+        mock_db = db_chain(data=[{"user_id": 1}])
+        with patch(MODULE, return_value=mock_db):
+            await get_all_active_users()
+        mock_db.in_.assert_called_once_with("role", ["owner", "beta"])
+
+    async def test_single_user_returns_single_id(self, db_chain):
+        mock_db = db_chain(data=[{"user_id": 999}])
+        with patch(MODULE, return_value=mock_db):
+            result = await get_all_active_users()
+        assert len(result) == 1
+        assert result[0] == 999

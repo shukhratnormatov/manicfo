@@ -11,6 +11,8 @@ from aiogram.types import BotCommand
 
 from bot.middlewares.auth import AuthMiddleware
 from bot.handlers import start, transactions, goals, stats, rates, subscriptions, admin, edit, budget
+from bot.services.scheduler import setup_scheduler, scheduler as job_scheduler
+import bot.services.supabase_db as db
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s %(message)s")
 logger = logging.getLogger(__name__)
@@ -28,6 +30,13 @@ async def on_startup(bot: Bot) -> None:
         BotCommand(command="help",    description="❓ Помощь"),
     ])
     logger.info("Bot commands registered.")
+    sched = setup_scheduler(bot, db)
+    sched.start()
+
+
+async def on_shutdown() -> None:
+    job_scheduler.shutdown(wait=False)
+    logger.info("Scheduler stopped.")
 
 
 async def main():
@@ -35,6 +44,7 @@ async def main():
     dp = Dispatcher(storage=MemoryStorage())
 
     dp.startup.register(on_startup)
+    dp.shutdown.register(on_shutdown)
 
     dp.message.middleware(AuthMiddleware())
     dp.callback_query.middleware(AuthMiddleware())
