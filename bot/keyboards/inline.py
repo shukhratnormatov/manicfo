@@ -37,14 +37,16 @@ def back_to_menu_btn() -> InlineKeyboardMarkup:
     ])
 
 
-def history_item_kb(tx_id: str) -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(inline_keyboard=[
+def history_item_kb(tx_id: str, show_menu: bool = True) -> InlineKeyboardMarkup:
+    rows = [
         [
             InlineKeyboardButton(text="✏️ Изменить", callback_data=f"edit:tx:{tx_id}"),
             InlineKeyboardButton(text="🗑 Удалить", callback_data=f"delete:tx:{tx_id}"),
         ],
-        [InlineKeyboardButton(text="🏠 Меню", callback_data="nav:menu")],
-    ])
+    ]
+    if show_menu:
+        rows.append([InlineKeyboardButton(text="🏠 Меню", callback_data="nav:menu")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def goals_kb() -> InlineKeyboardMarkup:

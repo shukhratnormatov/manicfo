@@ -75,7 +75,8 @@ async def cmd_history(message: Message):
         return
 
     await message.answer("📋 *Последние транзакции*", parse_mode="Markdown")
-    for t in txns:
+    last_idx = len(txns) - 1
+    for i, t in enumerate(txns):
         type_emoji = "🔴" if t["type"] == "expense" else "🟢"
         cat = t.get("category", "другое")
         cat_emoji = CATEGORY_EMOJI.get(cat, "📦")
@@ -86,5 +87,5 @@ async def cmd_history(message: Message):
         await message.answer(
             tx_text,
             parse_mode="Markdown",
-            reply_markup=history_item_kb(str(t["id"])),
+            reply_markup=history_item_kb(str(t["id"]), show_menu=(i == last_idx)),
         )

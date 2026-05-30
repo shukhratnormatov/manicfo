@@ -15,21 +15,30 @@ def get_client() -> anthropic.Anthropic:
     return _client
 
 
-async def parse_transaction(text: str) -> Optional[dict]:
+async def parse_transaction(text: str) -> Optional[list[dict]]:
+    """Парсит текст и возвращает список транзакций (одну или несколько).
+
+    Возвращает None при ошибке API/JSON или если ни одна запись не прошла валидацию.
+    """
     client = get_client()
     try:
         response = client.messages.create(
             model="claude-sonnet-4-5",
-            max_tokens=256,
+            max_tokens=1024,
             system=PARSE_SYSTEM_PROMPT,
             messages=[{"role": "user", "content": text}],
         )
         raw = response.content[0].text.strip()
         raw = raw.replace("```json", "").replace("```", "").strip()
         data = json.loads(raw)
-        if data.get("type") not in ("income", "expense", "unknown", "intent"):
-            return None
-        return data
+
+        # Обратная совместимость: если Claude вернул объект, а не массив
+        if isinstance(data, dict):
+            data = [data]
+
+        valid_types = ("income", "expense", "unknown", "intent")
+        valid = [item for item in data if item.get("type") in valid_types]
+        return valid if valid else None
     except (json.JSONDecodeError, Exception):
         return None
 

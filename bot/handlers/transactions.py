@@ -100,63 +100,11 @@ async def cancel_transaction_cb(callback: CallbackQuery):
         )
 
 
-# ── Основной хендлер свободного текста ──────────────────────────────────────
+# ── Обработка одной транзакции ───────────────────────────────────────────────
 
-@router.message(StateFilter(default_state))
-async def handle_free_text(message: Message, state: FSMContext):
-    text = message.text or ""
-    if text.startswith("/"):
-        return
-
-    parsed = await claude_parser.parse_transaction(text)
-    if not parsed:
-        await message.answer(
-            "🤔 Не понял. Попробуй написать иначе:\n"
-            "«потратил 50к на продукты» или «получил зарплату 3 млн»"
-        )
-        return
-
+async def _process_single_tx(message: Message, parsed: dict) -> None:
+    """Записывает одну распознанную транзакцию и отправляет подтверждение."""
     type_ = parsed["type"]
-
-    # ── FEAT-2: Диспетчер интентов ───────────────────────────────────────────
-    if type_ == "intent":
-        intent = parsed.get("intent_action", "")
-        if intent == "show_stats":
-            from bot.handlers.stats import cmd_stats
-            await cmd_stats(message)
-        elif intent == "show_goals":
-            from bot.handlers.goals import cmd_goals
-            await cmd_goals(message)
-        elif intent == "show_history":
-            from bot.handlers.stats import cmd_history
-            await cmd_history(message)
-        elif intent == "show_subs":
-            from bot.handlers.subscriptions import cmd_subs
-            await cmd_subs(message)
-        elif intent == "show_rates":
-            from bot.handlers.rates import cmd_rates
-            await cmd_rates(message)
-        elif intent == "show_week":
-            from bot.handlers.stats import cmd_week
-            await cmd_week(message)
-        elif intent == "show_budget":
-            from bot.handlers.budget import cmd_budget
-            await cmd_budget(message, state)
-        else:
-            await message.answer(
-                "🤔 Не понял. Попробуй написать иначе:\n"
-                "«потратил 50к на продукты» или «получил зарплату 3 млн»"
-            )
-        return
-
-    # ── BUG-3: Фильтр нераспознанных транзакций ──────────────────────────────
-    if type_ == "unknown":
-        await message.answer(
-            "🤔 Не понял. Попробуй написать иначе:\n"
-            "«потратил 50к на продукты» или «получил зарплату 3 млн»"
-        )
-        return
-
     amount = float(parsed["amount"])
     currency = parsed.get("currency", "UZS")
 
@@ -263,3 +211,70 @@ async def handle_free_text(message: Message, state: FSMContext):
         asyncio.create_task(expire_cancel_button(sent_msg, tx_id))
     else:
         await message.answer(response, parse_mode="Markdown")
+
+
+# ── Основной хендлер свободного текста ──────────────────────────────────────
+
+@router.message(StateFilter(default_state))
+async def handle_free_text(message: Message, state: FSMContext):
+    text = message.text or ""
+    if text.startswith("/"):
+        return
+
+    parsed_list = await claude_parser.parse_transaction(text)
+    if not parsed_list:
+        await message.answer(
+            "🤔 Не понял. Попробуй написать иначе:\n"
+            "«потратил 50к на продукты» или «получил зарплату 3 млн»"
+        )
+        return
+
+    # ── Одна запись: обрабатываем интент или unknown ─────────────────────────
+    if len(parsed_list) == 1:
+        parsed = parsed_list[0]
+        type_ = parsed["type"]
+
+        # ── FEAT-2: Диспетчер интентов ───────────────────────────────────────
+        if type_ == "intent":
+            intent = parsed.get("intent_action", "")
+            if intent == "show_stats":
+                from bot.handlers.stats import cmd_stats
+                await cmd_stats(message)
+            elif intent == "show_goals":
+                from bot.handlers.goals import cmd_goals
+                await cmd_goals(message)
+            elif intent == "show_history":
+                from bot.handlers.stats import cmd_history
+                await cmd_history(message)
+            elif intent == "show_subs":
+                from bot.handlers.subscriptions import cmd_subs
+                await cmd_subs(message)
+            elif intent == "show_rates":
+                from bot.handlers.rates import cmd_rates
+                await cmd_rates(message)
+            elif intent == "show_week":
+                from bot.handlers.stats import cmd_week
+                await cmd_week(message)
+            elif intent == "show_budget":
+                from bot.handlers.budget import cmd_budget
+                await cmd_budget(message, state)
+            else:
+                await message.answer(
+                    "🤔 Не понял. Попробуй написать иначе:\n"
+                    "«потратил 50к на продукты» или «получил зарплату 3 млн»"
+                )
+            return
+
+        # ── BUG-3: Фильтр нераспознанных транзакций ──────────────────────────
+        if type_ == "unknown":
+            await message.answer(
+                "🤔 Не понял. Попробуй написать иначе:\n"
+                "«потратил 50к на продукты» или «получил зарплату 3 млн»"
+            )
+            return
+
+    # ── Одна или несколько транзакций: записываем каждую ────────────────────
+    for parsed in parsed_list:
+        if parsed["type"] in ("unknown", "intent"):
+            continue
+        await _process_single_tx(message, parsed)
