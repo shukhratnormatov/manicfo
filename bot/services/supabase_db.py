@@ -1,6 +1,6 @@
 import os
 import secrets
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from typing import Optional
 from supabase import create_client, Client
 
@@ -463,7 +463,7 @@ async def create_invite_token(owner_id: int) -> str:
     await ensure_user(owner_id, None)
     db = get_client()
     token = "inv_" + secrets.token_urlsafe(8)
-    expires = (datetime.utcnow() + timedelta(hours=48)).isoformat()
+    expires = (datetime.now(timezone.utc) + timedelta(hours=48)).isoformat()
     db.table("invite_tokens").insert({
         "token": token,
         "created_by": owner_id,
@@ -487,7 +487,7 @@ async def get_all_active_users() -> list:
 async def use_invite_token(token: str, user_id: int) -> bool:
     """Проверяет токен и выдаёт доступ пользователю. Возвращает True если успешно."""
     db = get_client()
-    now = datetime.utcnow().isoformat()
+    now = datetime.now(timezone.utc).isoformat()
     result = (
         db.table("invite_tokens")
         .select("*")
