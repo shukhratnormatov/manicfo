@@ -176,6 +176,76 @@ class TestParseTransaction:
         assert result is None
 
 
+# ── new categories (FEAT-5) ───────────────────────────────────────────────────
+
+class TestNewCategories:
+    """Проверяет что новые категории из FEAT-5 корректно распознаются."""
+
+    async def test_кофейня_кофе_снеки(self):
+        payload = {"type": "expense", "amount": 25000, "currency": "UZS",
+                   "category": "кофе_снеки", "description": "Кофейня"}
+        with patch("bot.services.claude_parser.get_client",
+                   return_value=_make_client(json.dumps(payload))):
+            result = await parse_transaction("зашёл в кофейню 25к")
+        assert result is not None
+        assert result[0]["category"] == "кофе_снеки"
+
+    async def test_таблетки_аптека(self):
+        payload = {"type": "expense", "amount": 80000, "currency": "UZS",
+                   "category": "аптека", "description": "Таблетки"}
+        with patch("bot.services.claude_parser.get_client",
+                   return_value=_make_client(json.dumps(payload))):
+            result = await parse_transaction("купил таблетки в аптеке 80к")
+        assert result is not None
+        assert result[0]["category"] == "аптека"
+
+    async def test_барбершоп_красота_уход(self):
+        payload = {"type": "expense", "amount": 120000, "currency": "UZS",
+                   "category": "красота_уход", "description": "Барбершоп"}
+        with patch("bot.services.claude_parser.get_client",
+                   return_value=_make_client(json.dumps(payload))):
+            result = await parse_transaction("стрижка в барбершопе 120к")
+        assert result is not None
+        assert result[0]["category"] == "красота_уход"
+
+    async def test_билеты_путешествия(self):
+        payload = {"type": "expense", "amount": 500, "currency": "USD",
+                   "category": "путешествия", "description": "Билеты в Стамбул"}
+        with patch("bot.services.claude_parser.get_client",
+                   return_value=_make_client(json.dumps(payload))):
+            result = await parse_transaction("купил билеты в Стамбул 500$")
+        assert result is not None
+        assert result[0]["category"] == "путешествия"
+        assert result[0]["currency"] == "USD"
+
+    async def test_подарок_жене(self):
+        payload = {"type": "expense", "amount": 300000, "currency": "UZS",
+                   "category": "подарки", "description": "Подарок жене"}
+        with patch("bot.services.claude_parser.get_client",
+                   return_value=_make_client(json.dumps(payload))):
+            result = await parse_transaction("подарок жене 300к")
+        assert result is not None
+        assert result[0]["category"] == "подарки"
+
+    async def test_udemy_образование(self):
+        payload = {"type": "expense", "amount": 150000, "currency": "UZS",
+                   "category": "образование", "description": "Курс Udemy"}
+        with patch("bot.services.claude_parser.get_client",
+                   return_value=_make_client(json.dumps(payload))):
+            result = await parse_transaction("оплатил курс на udemy 150к")
+        assert result is not None
+        assert result[0]["category"] == "образование"
+
+    async def test_ucell_моб_интернет(self):
+        payload = {"type": "expense", "amount": 50000, "currency": "UZS",
+                   "category": "моб_интернет", "description": "Ucell"}
+        with patch("bot.services.claude_parser.get_client",
+                   return_value=_make_client(json.dumps(payload))):
+            result = await parse_transaction("пополнил ucell 50к")
+        assert result is not None
+        assert result[0]["category"] == "моб_интернет"
+
+
 # ── parse_subscription_nlp ────────────────────────────────────────────────────
 
 class TestParseSubscriptionNlp:
