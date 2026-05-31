@@ -44,12 +44,15 @@ async def to_uzs(amount: float, currency: str) -> float:
 
 
 async def get_rates_text() -> str:
+    from datetime import date
     rates = await fetch_rates()
     usd = rates.get("USD", 0)
     rub = rates.get("RUB", 0)
+    today = date.today().strftime("%d.%m.%Y")
     return (
         f"💱 *Курсы валют*\n\n"
         f"🇺🇸 USD → {usd:,.0f} сум\n"
         f"🇷🇺 RUB → {rub:,.2f} сум\n\n"
-        f"_Источник: cbu.uz_"
+        f"_Источник: cbu.uz_\n"
+        f"_Обновлено: {today}_"
     )

@@ -4,7 +4,8 @@ from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import State, StatesGroup
 from aiogram.types import Message, CallbackQuery
 
-from bot.keyboards.inline import goals_actions_kb, goals_kb, skip_kb
+from bot.keyboards.inline import goals_actions_kb, goals_kb, skip_kb, goal_item_kb
+from bot.keyboards.reply import MENU_BUTTONS
 from bot.services import supabase_db as db, analytics
 from bot.utils.formatters import format_sum, progress_bar, format_percent
 
@@ -35,14 +36,15 @@ async def cmd_goals(message: Message):
     monthly_avg = await db.get_monthly_income_avg(message.from_user.id, 3)
     monthly_rate = monthly_avg * 0.15
 
-    text = "🎯 *Твои цели накопления*\n\n"
+    await message.answer("🎯 *Твои цели накопления*", parse_mode="Markdown")
+
     for i, goal in enumerate(goals, 1):
         saved = float(goal["saved_amount"] or 0)
         target = float(goal["target_amount"])
         bar = progress_bar(saved, target)
         pct = format_percent(saved, target)
 
-        text += f"*{i}. {goal['name']}*\n"
+        text = f"*{i}. {goal['name']}*\n"
         text += f"{format_sum(saved)} / {format_sum(target)} сум\n"
         text += f"{bar} {pct}\n"
         if goal.get("deadline"):
@@ -55,9 +57,10 @@ async def cmd_goals(message: Message):
                 text += "✅ Цель достигнута!\n"
             elif months:
                 text += f"При +{format_sum(monthly_rate)}/мес → {months_to_human(months)}\n"
-        text += "\n"
 
-    await message.answer(text, parse_mode="Markdown", reply_markup=goals_kb())
+        await message.answer(text, parse_mode="Markdown", reply_markup=goal_item_kb(str(goal["id"])))
+
+    await message.answer("Управление целями:", reply_markup=goals_kb())
 
 
 @router.message(Command("add_goal"))
@@ -70,7 +73,7 @@ async def cmd_add_goal(event, state: FSMContext):
     await state.set_state(AddGoalStates.waiting_name)
 
 
-@router.message(AddGoalStates.waiting_name)
+@router.message(AddGoalStates.waiting_name, ~F.text.in_(MENU_BUTTONS))
 async def add_goal_name(message: Message, state: FSMContext):
     await state.update_data(name=message.text.strip())
     await message.answer(
@@ -80,7 +83,7 @@ async def add_goal_name(message: Message, state: FSMContext):
     await state.set_state(AddGoalStates.waiting_amount)
 
 
-@router.message(AddGoalStates.waiting_amount)
+@router.message(AddGoalStates.waiting_amount, ~F.text.in_(MENU_BUTTONS))
 async def add_goal_amount(message: Message, state: FSMContext):
     text = message.text.strip().lower().replace(" ", "")
     try:
@@ -92,6 +95,10 @@ async def add_goal_amount(message: Message, state: FSMContext):
             amount = float(text)
     except ValueError:
         await message.answer("Не понял сумму, попробуй: 8000000")
+        return
+
+    if amount <= 0:
+        await message.answer("Сумма должна быть больше нуля. Введи заново:")
         return
 
     await state.update_data(amount=amount)
@@ -108,7 +115,7 @@ async def skip_goal_deadline(callback: CallbackQuery, state: FSMContext):
     await _finish_add_goal(callback.message, state, None)
 
 
-@router.message(AddGoalStates.waiting_deadline)
+@router.message(AddGoalStates.waiting_deadline, ~F.text.in_(MENU_BUTTONS))
 async def add_goal_deadline(message: Message, state: FSMContext):
     deadline = None
     try:
@@ -163,7 +170,7 @@ async def cmd_save(event, state: FSMContext):
     await state.set_state(SaveGoalStates.waiting_goal_choice)
 
 
-@router.message(SaveGoalStates.waiting_goal_choice)
+@router.message(SaveGoalStates.waiting_goal_choice, ~F.text.in_(MENU_BUTTONS))
 async def save_goal_choice(message: Message, state: FSMContext):
     data = await state.get_data()
     goals = data.get("goals", [])
@@ -180,7 +187,7 @@ async def save_goal_choice(message: Message, state: FSMContext):
     await state.set_state(SaveGoalStates.waiting_amount)
 
 
-@router.message(SaveGoalStates.waiting_amount)
+@router.message(SaveGoalStates.waiting_amount, ~F.text.in_(MENU_BUTTONS))
 async def save_goal_amount(message: Message, state: FSMContext):
     text = message.text.strip().lower().replace(" ", "")
     try:

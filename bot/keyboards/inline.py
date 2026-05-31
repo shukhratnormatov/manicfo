@@ -37,14 +37,16 @@ def back_to_menu_btn() -> InlineKeyboardMarkup:
     ])
 
 
-def history_item_kb(tx_id: str) -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(inline_keyboard=[
+def history_item_kb(tx_id: str, show_menu: bool = True) -> InlineKeyboardMarkup:
+    rows = [
         [
             InlineKeyboardButton(text="✏️ Изменить", callback_data=f"edit:tx:{tx_id}"),
             InlineKeyboardButton(text="🗑 Удалить", callback_data=f"delete:tx:{tx_id}"),
         ],
-        [InlineKeyboardButton(text="🏠 Меню", callback_data="nav:menu")],
-    ])
+    ]
+    if show_menu:
+        rows.append([InlineKeyboardButton(text="🏠 Меню", callback_data="nav:menu")])
+    return InlineKeyboardMarkup(inline_keyboard=rows)
 
 
 def goals_kb() -> InlineKeyboardMarkup:
@@ -73,4 +75,40 @@ def cancel_tx_kb(tx_id: str) -> InlineKeyboardMarkup:
 def skip_kb(callback_data: str = "skip") -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="⏭ Пропустить", callback_data=callback_data)],
+    ])
+
+
+def sub_item_kb(sub_id: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="✏️ Изменить", callback_data=f"edit:sub:{sub_id}"),
+            InlineKeyboardButton(text="🗑 Удалить", callback_data=f"delete:sub:{sub_id}"),
+        ],
+    ])
+
+
+def goal_item_kb(goal_id: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="✏️ Изменить", callback_data=f"edit:goal:{goal_id}"),
+            InlineKeyboardButton(text="🗑 Удалить", callback_data=f"delete:goal:{goal_id}"),
+        ],
+        [InlineKeyboardButton(text="💳 Пополнить", callback_data="goal_save")],
+    ])
+
+
+def budget_empty_kb() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="💰 Установить бюджет", callback_data="budget:set")],
+        [InlineKeyboardButton(text="🏠 Меню", callback_data="nav:menu")],
+    ])
+
+
+def budget_set_kb() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="✏️ Изменить", callback_data="budget:set"),
+            InlineKeyboardButton(text="🗑 Удалить", callback_data="budget:delete"),
+        ],
+        [InlineKeyboardButton(text="🏠 Меню", callback_data="nav:menu")],
     ])

@@ -21,6 +21,14 @@ class AuthMiddleware(BaseMiddleware):
             return await handler(event, data)
 
         user_id = event.from_user.id
+
+        # Владелец бота определяется OWNER_TG_ID — ему всегда роль "owner"
+        owner_tg_id = os.environ.get("OWNER_TG_ID", "")
+        if owner_tg_id and str(user_id) == owner_tg_id:
+            await db.ensure_user(user_id, event.from_user.username)
+            data["user_role"] = "owner"
+            return await handler(event, data)
+
         role = await db.get_user_role(user_id)
 
         if role == "banned":
